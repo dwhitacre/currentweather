@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<title>Weather App</title>
+		<meta name="author" content="Dan Whitacre">
+		<meta name="description" content="Current Weather for given city/zip">
+
+		<!-- Google's Jquery -->
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+		<!-- fall back on own copy -->
+		<script>if(!window.jQuery) { document.write('<script src="js/jquery-1.11.3.min.js"><\/script>'); }</script>
+
+		<!-- Bootstrap -->
+		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<script src="js/bootstrap.min.js"></script>
+
+		<!-- Cover Template -->
+		<link href="css/cover.css" rel="stylesheet">
+	</head>
+	<body>
+		<div class="site-wrapper">
+			<div class="site-wrapper-inner">
+				<div class="cover-container">
+					<div class="masthead clearfix">
+						<div class="inner">
+							<h3 class="masthead-brand">Current Weather</h3>
+							<nav>
+								<ul class="nav masthead-nav">
+									<li id="homenav"><a href="#home">Home</a></li>
+									<li id="locationnav" class="active"><a href="#location">Location</a></li>
+								</ul>
+							</nav>
+						</div>
+					</div>
+					<div class="inner cover">
+						<div id="location">
+							<h1 class="cover-heading">Choose your location.</h1>
+							<p class="lead">
+								Enter either your city or zipcode and pick a temperature unit below.
+							</p>
+							<div class="input-group" style="width: 70% !important; margin: 0 auto;">
+  								<input class="form-control" id="cityzip" placeholder="eg Columbus/Cincinnati/43201/45247" type="text">
+  								<span class="input-group-addon">
+  									<form>
+										<input value="celsius" type="radio" name="temp"> C
+										<input value="fahrenheit" type="radio" name="temp" checked> F
+										<input value="kelvin" type="radio" name="temp"> K
+									</form>
+  								</span>
+  							</div>
+							<p class="lead" style="padding: 20px">
+								<a href="#home" class="btn btn-lg btn-default">Get Current Weather</a>
+							</p>
+							<p id="error" style="color: red;"></p>
+						</div>
+						<div id="home">
+							<h1 id="cityname" class="cover-heading">
+								CityName <span style="font-size: 50%;"><i>Lat: 80 Lon: 10</i></span>
+							</h1>
+							<h1 id="currtemp" class="cover-heading">
+								<span style="font-size: 500%;">75&deg;</span>
+							</h1>
+							<p id="highlow" class="lead">
+								High: 80&deg; Low: 60&deg;
+							</p>
+							<div id="condition" style="font-size: 200%">
+								Sunny <img src="img/01d.png"><span style="font-size: 50%"><i> clear skies</i></span>
+							</div>
+						</div>
+						<script>$('#home').hide();</script>
+					</div>
+					<div class="mastfoot">
+						<div class="inner">
+							<p>
+								Current Weather provided by <a href="http://openweathermap.org" target="_blank">OpenWeatherApp</a>
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			(function ($) {
+				$.fn.weatherapp = function () {
+					// something went wrong display an error (most of the time invalid city name or zip)
+					var displayError = function (err) {
+						// remove listener from home nav
+						$('li a[href="#home"]').off('click');
+
+						$('#error').text(err).show();
+					};
+
+					// update the home page with correct info
+					var updatePage = function (info) {
+						// update city name, lat and lon
+						var cityname = $('#cityname');
+						var lonlat = cityname.children();
+						cityname.text(info.name + ' ');
+						lonlat.children().text('Lat: ' + info.coor.lat + ' Lon: ' + info.coor.lon);
+						cityname.append(lonlat);
+
+						// update current temp
+						$('#currtemp span').text(Math.round(info.temp.curr) + '\xB0');
+
+						// update high low temp
+						$('#highlow').text('High: ' + Math.round(info.temp.high) + '\xB0 Low: ' + Math.round(info.temp.low) + '\xB0');
+
+						// update conditions
+						var cond = $('#condition');
+						var desc = cond.children('span');
+						var image = cond.children('img');
+						cond.text(info.cond + ' ');
+						desc.children().text(' ' + info.desc);
+						image.attr('src','img/' + info.icon + '.png');
+						cond.append(image).append(desc);
+
+						// switch to home page
+						$('#homenav').addClass('active');
+						$('#locationnav').removeClass('active');
+						$('#location').hide();
+						$('#home').show();
+
+						// add home nav listener
+						$('li a[href="#home"]').click(function () {
+							$('#homenav').addClass('active');
+							$('#locationnav').removeClass('active');
+							$('#location').hide();
+							$('#home').show();
+						});
+					};
+
+					// call api
+					var getWeather = function () {
+						$('#error').hide();
+						var location = $('#cityzip').val();
+						if (location.length === 0) return displayError('Please enter a city/zip.');
+						var unit = $('input[name="temp"]:checked').val();
+						$.ajax({
+							url: '/api/' + location + '?unit=' + unit,
+							success: function (response) {
+								if (response.error) {
+									displayError(response.error);
+								} else {
+									updatePage(response);
+								}
+							},
+							error: function (response) {
+								displayError('Sorry, the server is temporarily down. Please try again later.')
+							}
+						});
+					};
+
+					// page functionality
+					var pagefunction = function () {
+						// location nav
+						$('a[href="#location"').click(function () {
+							$('#locationnav').addClass('active');
+							$('#homenav').removeClass('active');
+							$('#home').hide();
+							$('#location').show();	
+						});
+
+						// get current weather button
+						$('p a[href="#home"]').click(getWeather);
+					};
+
+					this.loadPage = pagefunction;
+					return this;
+				}
+			})(jQuery);
+
+			$('body').weatherapp().loadPage();
+		</script>
+	</body>
+</html>
