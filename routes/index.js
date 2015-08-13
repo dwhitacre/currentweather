@@ -6,9 +6,4 @@ router.get('/', function (req, res) {
 	res.json({ message: 'Page Loaded'});
 });
 
-/* GET weather icon */
-router.get('/icon/:iconid', function (req, res) {
-	
-});
-
 module.exports = router;
