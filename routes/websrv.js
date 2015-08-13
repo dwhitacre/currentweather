@@ -12,14 +12,16 @@ router.get('/:loc', function (req, res) {
 	var	foreWeatherURL = 'http://api.openweathermap.org/data/2.5/forecast/daily?APPID=' + API_KEY + '&cnt=1&'; // need this for daily low and highs
 
 	// add unit to current and forecast weather url
-	if (unit.toLowerCase() === 'celsius') {
-		currWeatherURL += 'units=metric&';
-		foreWeatherURL += 'units=metric&';
-	} else if (unit.toLowerCase() === 'fahrenheit') {
-		currWeatherURL += 'units=imperial&';
-		foreWeatherURL += 'units=imperial&';
+	if (unit) {
+		if (unit.toLowerCase() === 'celsius') {
+			currWeatherURL += 'units=metric&';
+			foreWeatherURL += 'units=metric&';
+		} else if (unit.toLowerCase() === 'fahrenheit') {
+			currWeatherURL += 'units=imperial&';
+			foreWeatherURL += 'units=imperial&';
+		}
 	}
-
+	
 	// add location to current weather url
 	currWeatherURL += (isNaN(req.params.loc)) ? 'q=' : 'zip=';
 	currWeatherURL += req.params.loc;
